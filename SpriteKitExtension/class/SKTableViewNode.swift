@@ -203,7 +203,20 @@ public class SKTableViewNode: SKNode {
     //SpriteKit method
     //Update method, to be called in scene's update.
     public func update(_ currentTime: TimeInterval) {
-        
+        if !isUpdateForegroundLayer {
+            let _topPositiony: CGFloat = size.height / 2 - foregroundLayer.position.y
+            
+            var _visibleItemIndex: Int? = nil
+            for _index in 0..<tableLayoutItems.count {
+                if _topPositiony <= (tableLayoutItems[_index].layoutItem.position.y + tableLayoutItems[_index].layoutItem.layoutItemHeight / 2) {
+                    _visibleItemIndex = _index
+                    break
+                }
+            }
+            if _visibleItemIndex != nil {
+                updateForegroundLayer(fromlayoutIndex: _visibleItemIndex!)
+            }
+        }
     }
     
     //Private properties for hit test
@@ -397,6 +410,46 @@ public class SKTableViewNode: SKNode {
         }
     }
     
+    private var isUpdateForegroundLayer: Bool = false   //A Boolean value detemine if the method updateForegroundLayer is calling
+    //When one height of Layout Item was changed, the whole foreground will be changed, update the layout Items' layoutItemHeight and position lower from the fromlayoutIndex
+    private func updateForegroundLayer(fromlayoutIndex: Int) {
+        isUpdateForegroundLayer = true
+        
+        var startPosition = CGPoint(x: 0.0, y: tableLayoutItems[fromlayoutIndex].layoutItem.position.y + tableLayoutItems[fromlayoutIndex].layoutItem.layoutItemHeight / 2.0)
+        
+        for _index in fromlayoutIndex..<tableLayoutItems.count {
+            let _indexpath = tableLayoutItems[_index].index
+            let _layoutItem = tableLayoutItems[_index].layoutItem
+            
+            switch _layoutItem.itemType {
+            case .sectionHeader:
+                _layoutItem.layoutItemHeight = delegate?.tableView(self, heightForHeaderInSection: _indexpath.section) ?? SKTableViewNode.automaticDimension
+                if _layoutItem.layoutItemHeight == SKTableViewNode.automaticDimension {
+                    _layoutItem.layoutItemHeight = _layoutItem.contentNode?.calculateHeight ?? 20
+                }
+            case .sectionFooter:
+                _layoutItem.layoutItemHeight = delegate?.tableView(self, heightForFooterInSection: _indexpath.section) ?? SKTableViewNode.automaticDimension
+                if _layoutItem.layoutItemHeight == SKTableViewNode.automaticDimension {
+                    _layoutItem.layoutItemHeight = _layoutItem.contentNode?.calculateHeight ?? 0
+                }
+            case .tableCell:
+                _layoutItem.layoutItemHeight = delegate?.tableView(self, heightForRowAt: _indexpath) ?? SKTableViewNode.automaticDimension
+                if _layoutItem.layoutItemHeight == SKTableViewNode.automaticDimension {
+                    _layoutItem.layoutItemHeight = _layoutItem.contentNode?.calculateHeight ?? 20
+                }
+            default:
+                break
+            }
+            _layoutItem.position = CGPoint(x: startPosition.x, y: startPosition.y - _layoutItem.layoutItemHeight / 2.0)
+            
+            startPosition = CGPoint(x: startPosition.x, y: startPosition.y - _layoutItem.layoutItemHeight)
+            
+        }
+        
+        isUpdateForegroundLayer = false
+        
+    }
+    
     
     //Scroll Table
     private func scrollTable(with: CGVector) {
@@ -411,12 +464,6 @@ public class SKTableViewNode: SKNode {
         }
         
         foregroundLayer.position = _targetPosition
-    }
-    
-    
-    //
-    private func updateForegroundLayer() {
-        
     }
     
     
@@ -448,7 +495,7 @@ public class SKTableViewNode: SKNode {
 }
 
 
-//
+//  MARK: - SKTableViewNodeLayoutItem
 
 fileprivate class SKTableViewNodeLayoutItem: SKNode {
     enum LayoutType: Int {
