@@ -37,17 +37,24 @@ public class SKTableViewNode: SKNode {
     }
     
     //Appearance
-    private(set) public var size: CGSize!
+    private(set) public var size: CGSize = CGSize.zero
     public var backgroundNode: SKNode? {
         didSet {
             oldValue?.removeFromParent()
             if backgroundNode != nil {
+                backgroundNode!.position = CGPoint.zero
+                if backgroundNode!.calculateAccumulatedFrame().size.width > 0 {
+                    backgroundNode!.xScale = size.width / backgroundNode!.calculateAccumulatedFrame().size.width
+                }
+                
+                if backgroundNode!.calculateAccumulatedFrame().size.height > 0 {
+                    backgroundNode!.yScale = size.height / backgroundNode!.calculateAccumulatedFrame().size.height
+                }
                 backgroundLayer.addChild(backgroundNode!)
             }
         }
     }
-//    public var tableHeaderNode: SKTableViewNodeHeadFoot?
-//    public var tableFooterNode: SKTableViewNodeHeadFoot?
+
     
     public var allowsSelect: Bool = true {
         didSet {
@@ -72,8 +79,7 @@ public class SKTableViewNode: SKNode {
     }
     
     public var indexPathForVisibleRows: [IndexPath] {
-        return tableLayoutItems.filter({ ($0.index.row >= 0 && isLayoutItemVisible(at: $0.index)) })
-            .map({ $0.index })
+        return indexPathForVisibleLayoutItems.filter({ ($0.row != SKTableViewNode.sectionHeaderRowIndex && $0.row != SKTableViewNode.sectionFooterRowIndex) })
     }
     
     
@@ -113,7 +119,7 @@ public class SKTableViewNode: SKNode {
                 tableItems.append((sectionHeader: _sectionHeader, cells: _cells, sectionFooter: _sectionFooter))
             }
         }
-        initLayout()
+        initLayoutItems()
     }
     
     
@@ -195,6 +201,11 @@ public class SKTableViewNode: SKNode {
         
         
         //scroll to
+        if scrollto && !isLayoutItemVisible(at: at) {
+            let layoutItem = layoutItemForTable(at: at)
+            
+            scrollTable(with: CGVector(dx: 0, dy: layoutItem!.position.y + foregroundLayer.position.y))
+        }
         
         selectIndex = at
         
@@ -204,18 +215,7 @@ public class SKTableViewNode: SKNode {
     //Update method, to be called in scene's update.
     public func update(_ currentTime: TimeInterval) {
         if !isUpdateForegroundLayer {
-            let _topPositiony: CGFloat = size.height / 2 - foregroundLayer.position.y
-            
-            var _visibleItemIndex: Int? = nil
-            for _index in 0..<tableLayoutItems.count {
-                if _topPositiony <= (tableLayoutItems[_index].layoutItem.position.y + tableLayoutItems[_index].layoutItem.layoutItemHeight / 2) {
-                    _visibleItemIndex = _index
-                    break
-                }
-            }
-            if _visibleItemIndex != nil {
-                updateForegroundLayer(fromlayoutIndex: _visibleItemIndex!)
-            }
+            updateForegroundLayer()
         }
     }
     
@@ -230,6 +230,7 @@ public class SKTableViewNode: SKNode {
             return
         }
         _firstTouchposition = touches.first!.location(in: self)
+        
     }
     
     public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -272,15 +273,25 @@ public class SKTableViewNode: SKNode {
     private var foregroundLayer: SKNode = SKNode()
     
     //LayoutItems
-    private var tableLayoutItems = [(index: IndexPath, layoutItem: SKTableViewNodeLayoutItem)]()
+    private var tableLayoutItems = [IndexPath:  SKTableViewNodeLayoutItem]()
+    
+    //A Sequence of LayoutItems in order of IndexPath
+    private var tableLayoutItemsSequence: [(IndexPath, SKTableViewNodeLayoutItem)] {
+        return tableLayoutItems.sorted(by: { $0.key < $1.key })
+    }
     
     //TableItems
     private var tableItems = [(sectionHeader: SKTableViewNodeSectionHeadFoot?, cells: [SKTableViewNodeCell], sectionFooter: SKTableViewNodeSectionHeadFoot?)]()
     
+    //An Array of IndexPath for Visible LayoutItems
+    private var indexPathForVisibleLayoutItems: [IndexPath] {
+        return tableLayoutItems.filter({ isLayoutItemVisible(at: $0.key) }).keys.sorted(by: { $0 < $1 })
+    }
     
     
     //  MARK: - private method
     private func initLayer() {
+        backgroundLayer = SKSpriteNode(color: SKColor.clear, size: size)
         backgroundLayer.removeFromParent()
         backgroundLayer.position = CGPoint.zero
         backgroundLayer.zPosition = UIlayer.BackgroundLayer.rawValue
@@ -289,34 +300,41 @@ public class SKTableViewNode: SKNode {
         foregroundLayer.zPosition = UIlayer.ForegroundLayer.rawValue
         self.addChild(backgroundLayer)
         self.addChild(foregroundLayer)
+        
+        //init backgroundNode
+        backgroundNode = SKSpriteNode(color: #colorLiteral(red: 0.8374180198, green: 0.8374378085, blue: 0.8374271393, alpha: 1), size: size)
+        
     }
     
+    fileprivate static let sectionHeaderRowIndex = -1
+    fileprivate static let sectionFooterRowIndex = Int.max
     
     //Initial the TableLayoutItems
-    private func initLayout() {
+    private func initLayoutItems() {
         tableLayoutItems.removeAll()
         if dataSource != nil {
             let _sectionCount = dataSource!.numberOfSections(in: self) < 1 ? 1 : dataSource!.numberOfSections(in: self)
             for _sectionIndex in 0..<_sectionCount {
-                let _sectionHeaderLayout = SKTableViewNodeLayoutItem(type: .sectionHeader, index: IndexPath(row: -1, section: _sectionIndex))
+                let _sectionHeaderLayout = SKTableViewNodeLayoutItem(type: .sectionHeader, TableView: self)
                 _sectionHeaderLayout.contentNode = tableItems[_sectionIndex].sectionHeader
-                tableLayoutItems.append((index: IndexPath(row: -1, section: _sectionIndex), layoutItem: _sectionHeaderLayout))
+                tableLayoutItems[IndexPath(row: SKTableViewNode.sectionHeaderRowIndex, section: _sectionIndex)] = _sectionHeaderLayout
                 
                 let _rowCount = dataSource!.tableView(self, numberOfRowsInSection: _sectionIndex)
                 for _rowIndex in 0..<_rowCount {
-                    let _cellLayout = SKTableViewNodeLayoutItem(type: .tableCell, index: IndexPath(row: _rowIndex, section: _sectionIndex))
+                    let _cellLayout = SKTableViewNodeLayoutItem(type: .tableCell, TableView: self)
                     _cellLayout.contentNode = tableItems[_sectionIndex].cells[_rowIndex]
-                    tableLayoutItems.append((index: IndexPath(row: _rowIndex, section: _sectionIndex), layoutItem: _cellLayout))
+                    tableLayoutItems[IndexPath(row:_rowIndex, section: _sectionIndex)] = _cellLayout
                 }
                 
-                let _sectionFooterLayout = SKTableViewNodeLayoutItem(type: .sectionFooter, index: IndexPath(row: -2, section: _sectionIndex))
+                let _sectionFooterLayout = SKTableViewNodeLayoutItem(type: .sectionFooter, TableView: self)
                 _sectionFooterLayout.contentNode = tableItems[_sectionIndex].sectionFooter
-                tableLayoutItems.append((index: IndexPath(row: -2, section: _sectionIndex), layoutItem: _sectionFooterLayout))
+                tableLayoutItems[IndexPath(row: SKTableViewNode.sectionFooterRowIndex, section: _sectionIndex)] = _sectionFooterLayout
                 
             }
         }
         configLayout()
     }
+    
     
     
     //Config the foregroundLayer Layout
@@ -326,120 +344,76 @@ public class SKTableViewNode: SKNode {
         
         var standardPosition = CGPoint(x: 0, y: size.height / 2)
         
-        for (_indexpath, _layoutItem) in tableLayoutItems {
-            switch _layoutItem.itemType {
-            case .sectionHeader:
-                _layoutItem.layoutItemHeight = delegate?.tableView(self, heightForHeaderInSection: _indexpath.section) ?? SKTableViewNode.automaticDimension
-                if _layoutItem.layoutItemHeight == SKTableViewNode.automaticDimension {
-                    _layoutItem.layoutItemHeight = _layoutItem.contentNode?.calculateHeight ?? 20
-                }
-            case .sectionFooter:
-                _layoutItem.layoutItemHeight = delegate?.tableView(self, heightForFooterInSection: _indexpath.section) ?? SKTableViewNode.automaticDimension
-                if _layoutItem.layoutItemHeight == SKTableViewNode.automaticDimension {
-                    _layoutItem.layoutItemHeight = _layoutItem.contentNode?.calculateHeight ?? 0
-                }
-            case .tableCell:
-                _layoutItem.layoutItemHeight = delegate?.tableView(self, heightForRowAt: _indexpath) ?? SKTableViewNode.automaticDimension
-                if _layoutItem.layoutItemHeight == SKTableViewNode.automaticDimension {
-                    _layoutItem.layoutItemHeight = _layoutItem.contentNode?.calculateHeight ?? 20
-                }
-            default:
-                break
-            }
+        for (_indexpath, _layoutItem) in tableLayoutItemsSequence {
+            
+            configLayoutItemHeight(at: _indexpath)
+            
             _layoutItem.position = CGPoint(x: standardPosition.x, y: standardPosition.y - _layoutItem.layoutItemHeight / 2.0)
             foregroundLayer.addChild(_layoutItem)
             
             standardPosition = CGPoint(x: standardPosition.x, y: standardPosition.y - _layoutItem.layoutItemHeight)
+            
         }
         
     }
     
-    //abandon
-    private func initForgroundLayer() {
-        foregroundLayer.removeAllChildren()
-        
-        var standardPosition = CGPoint(x: 0, y: size.height / 2)
-        
-        for _sectionIndex in 0..<tableItems.count {
-            let _section = tableItems[_sectionIndex]
-            
-            //config section Header begin
-            var _sectionHeaderHeight = delegate?.tableView(self, heightForHeaderInSection: _sectionIndex) ?? SKTableViewNode.automaticDimension
-            if _sectionHeaderHeight == SKTableViewNode.automaticDimension {
-                _sectionHeaderHeight = _section.sectionHeader?.calculateHeight ?? 20
-            }
-            if _section.sectionHeader != nil {
-                //config section header position
-                _section.sectionHeader!.position = CGPoint(x: standardPosition.x, y: standardPosition.y - _sectionHeaderHeight / 2.0)
-                //add section header on foregroundLayer
-                foregroundLayer.addChild(_section.sectionHeader!)
-            }
-            standardPosition = CGPoint(x: standardPosition.x, y: standardPosition.y - _sectionHeaderHeight)
-            //config section Header end
-            
-            //config rows begin
-            for _rowIndex in 0..<_section.cells.count {
-                let _cell = _section.cells[_rowIndex]
-                
-                var _cellHeight = delegate?.tableView(self, heightForRowAt: IndexPath(row: _rowIndex, section: _sectionIndex)) ?? SKTableViewNode.automaticDimension
-                if _cellHeight == SKTableViewNode.automaticDimension {
-                    _cellHeight = _cell.calculateHeight
-                }
-                //config cell position
-                _cell.position = CGPoint(x: standardPosition.x, y: standardPosition.y - _cellHeight / 2.0)
-                //add cell on foregroundLayer
-                foregroundLayer.addChild(_cell)
-                
-                standardPosition = CGPoint(x: standardPosition.x, y: standardPosition.y - _cellHeight)
-            }
-            //config rows end
-            
-            //config section Footer begin
-            var _sectionFooterHeight = delegate?.tableView(self, heightForFooterInSection: _sectionIndex) ?? SKTableViewNode.automaticDimension
-            if _sectionFooterHeight == SKTableViewNode.automaticDimension {
-                _sectionFooterHeight = _section.sectionFooter?.calculateHeight ?? 0
-            }
-            if _section.sectionFooter != nil {
-                //config section footer position
-                _section.sectionFooter!.position = CGPoint(x: standardPosition.x, y: standardPosition.y - _sectionFooterHeight / 2.0)
-                //add section footer on foregroundLayer
-                foregroundLayer.addChild(_section.sectionFooter!)
-            }
-            standardPosition = CGPoint(x: standardPosition.x, y: standardPosition.y - _sectionFooterHeight)
-            //config section Footer end
+    
+    fileprivate static let defaultCellHeight: CGFloat = 44 //when the Height of cell/sectionHeader is automaticDimension, set this value
+    
+    //config one Layout Item's height which Item is at given indexpath
+    private func configLayoutItemHeight(at: IndexPath) {
+        guard let layoutItem = layoutItemForTable(at: at) else {
+            return
         }
+        
+        var layoutItemHeightInDelegate: CGFloat
+        
+        switch layoutItem.itemType {
+        case .sectionHeader:
+            layoutItemHeightInDelegate = delegate?.tableView(self, heightForHeaderInSection: at.section) ?? SKTableViewNode.automaticDimension
+            if layoutItemHeightInDelegate != SKTableViewNode.automaticDimension {
+                layoutItem.layoutItemHeight = layoutItemHeightInDelegate
+            } else {
+                layoutItem.layoutItemHeight = layoutItem.contentNode?.calculateHeight ?? SKTableViewNode.defaultCellHeight
+            }
+        case .sectionFooter:
+            layoutItemHeightInDelegate = delegate?.tableView(self, heightForFooterInSection: at.section) ?? SKTableViewNode.automaticDimension
+            if layoutItemHeightInDelegate != SKTableViewNode.automaticDimension {
+                layoutItem.layoutItemHeight = layoutItemHeightInDelegate
+            } else {
+                layoutItem.layoutItemHeight = layoutItem.contentNode?.calculateHeight ?? 0
+            }
+        case .tableCell:
+            layoutItemHeightInDelegate = delegate?.tableView(self, heightForRowAt: at) ?? SKTableViewNode.automaticDimension
+            if layoutItemHeightInDelegate != SKTableViewNode.automaticDimension {
+                layoutItem.layoutItemHeight = layoutItemHeightInDelegate
+            } else {
+                layoutItem.layoutItemHeight = layoutItem.contentNode?.calculateHeight ?? SKTableViewNode.defaultCellHeight
+            }
+//        default:
+//            break
+        }
+        
     }
+    
     
     private var isUpdateForegroundLayer: Bool = false   //A Boolean value detemine if the method updateForegroundLayer is calling
-    //When one height of Layout Item was changed, the whole foreground will be changed, update the layout Items' layoutItemHeight and position lower from the fromlayoutIndex
-    private func updateForegroundLayer(fromlayoutIndex: Int) {
+    //When one height of Layout Item was changed, the whole foreground will be changed, update the layout Items' layoutItemHeight and position lower than the Top VisibleLayoutItem.
+    private func updateForegroundLayer() {
+        guard let topVisibleItemIndex = indexPathForVisibleLayoutItems.first else {
+            return
+        }
+        
         isUpdateForegroundLayer = true
         
-        var startPosition = CGPoint(x: 0.0, y: tableLayoutItems[fromlayoutIndex].layoutItem.position.y + tableLayoutItems[fromlayoutIndex].layoutItem.layoutItemHeight / 2.0)
+        var startPosition = CGPoint(x: 0.0, y: tableLayoutItems[topVisibleItemIndex]!.position.y + tableLayoutItems[topVisibleItemIndex]!.layoutItemHeight / 2.0)
         
-        for _index in fromlayoutIndex..<tableLayoutItems.count {
-            let _indexpath = tableLayoutItems[_index].index
-            let _layoutItem = tableLayoutItems[_index].layoutItem
+        let updateLayoutItems = tableLayoutItemsSequence.filter({ $0.0 >= topVisibleItemIndex})
+        
+        for (_indexpath, _layoutItem) in updateLayoutItems {
             
-            switch _layoutItem.itemType {
-            case .sectionHeader:
-                _layoutItem.layoutItemHeight = delegate?.tableView(self, heightForHeaderInSection: _indexpath.section) ?? SKTableViewNode.automaticDimension
-                if _layoutItem.layoutItemHeight == SKTableViewNode.automaticDimension {
-                    _layoutItem.layoutItemHeight = _layoutItem.contentNode?.calculateHeight ?? 20
-                }
-            case .sectionFooter:
-                _layoutItem.layoutItemHeight = delegate?.tableView(self, heightForFooterInSection: _indexpath.section) ?? SKTableViewNode.automaticDimension
-                if _layoutItem.layoutItemHeight == SKTableViewNode.automaticDimension {
-                    _layoutItem.layoutItemHeight = _layoutItem.contentNode?.calculateHeight ?? 0
-                }
-            case .tableCell:
-                _layoutItem.layoutItemHeight = delegate?.tableView(self, heightForRowAt: _indexpath) ?? SKTableViewNode.automaticDimension
-                if _layoutItem.layoutItemHeight == SKTableViewNode.automaticDimension {
-                    _layoutItem.layoutItemHeight = _layoutItem.contentNode?.calculateHeight ?? 20
-                }
-            default:
-                break
-            }
+            configLayoutItemHeight(at: _indexpath)
+            
             _layoutItem.position = CGPoint(x: startPosition.x, y: startPosition.y - _layoutItem.layoutItemHeight / 2.0)
             
             startPosition = CGPoint(x: startPosition.x, y: startPosition.y - _layoutItem.layoutItemHeight)
@@ -458,9 +432,10 @@ public class SKTableViewNode: SKNode {
             _targetPosition = CGPoint(x: 0, y: 0)
         }
         
-        let _layoutItemsTotalHeight = tableLayoutItems.reduce(0.0) { $0 + $1.layoutItem.layoutItemHeight }
-        if _targetPosition.y > _layoutItemsTotalHeight - size.height {
-            _targetPosition = CGPoint(x: 0, y: _layoutItemsTotalHeight - size.height)
+        let _layoutItemsTotalHeight = tableLayoutItems.reduce(0.0) { $0 + $1.value.layoutItemHeight }
+        let _bottomPositiony = (_layoutItemsTotalHeight - size.height >= 0) ? _layoutItemsTotalHeight - size.height : 0
+        if _targetPosition.y > _bottomPositiony {
+            _targetPosition = CGPoint(x: 0, y: _bottomPositiony)
         }
         
         foregroundLayer.position = _targetPosition
@@ -468,28 +443,21 @@ public class SKTableViewNode: SKNode {
     
     
     private func isLayoutItemVisible(at: IndexPath) -> Bool {
-        guard at.section >= 0 && at.section < tableItems.count else {
+        guard let layoutItem = layoutItemForTable(at: at) else {
             return false
         }
         
-        guard at.row >= -2 && at.row < tableItems[at.section].cells.count else {
-            return false
-        }
-        
-        let layoutItem = tableLayoutItems.filter { return $0.index == at
-        }.first?.layoutItem
-        
-        guard layoutItem != nil else {
-            return false
-        }
-        
-        if ((layoutItem!.position.y - layoutItem!.layoutItemHeight / 2.0) < (size.height / 2.0 - foregroundLayer.position.y)) {
-            if ((layoutItem!.position.y + layoutItem!.layoutItemHeight / 2.0) > (0 - size.height / 2.0 - foregroundLayer.position.y)) {
+        if ((layoutItem.position.y - layoutItem.layoutItemHeight / 2.0) < (size.height / 2.0 - foregroundLayer.position.y)) {
+            if ((layoutItem.position.y + layoutItem.layoutItemHeight / 2.0) > (0 - size.height / 2.0 - foregroundLayer.position.y)) {
                 return true
             }
         }
         
         return false
+    }
+    
+    private func layoutItemForTable(at: IndexPath) -> SKTableViewNodeLayoutItem? {
+        return tableLayoutItems[at]
     }
     
 }
@@ -501,10 +469,26 @@ fileprivate class SKTableViewNodeLayoutItem: SKNode {
     enum LayoutType: Int {
         case sectionHeader, tableCell, sectionFooter
     }
+    
+    private(set) fileprivate weak var tableview: SKTableViewNode?
+    
     var itemType: LayoutType
-    var index: IndexPath!
-    var layoutItemHeight: CGFloat! = SKTableViewNode.automaticDimension
-    var isVisibleOnTable: Bool = false
+    var layoutItemHeight: CGFloat = SKTableViewNode.automaticDimension {
+        didSet {
+            if (oldValue != layoutItemHeight && size != nil) {
+//                if itemType == .tableCell {print(layoutItemHeight)}
+                contentNode?.setScaleTo(size!)
+            }
+        }
+    }
+    private var isVisibleOnTable: Bool = false
+    
+    var size: CGSize? {
+        if tableview != nil {
+            return CGSize(width: tableview!.size.width, height: layoutItemHeight)
+        }
+        return nil
+    }
     
     var contentNode: SKTableViewNodeComponent? {
         didSet {
@@ -513,14 +497,13 @@ fileprivate class SKTableViewNodeLayoutItem: SKNode {
                 contentNode?.position = CGPoint.zero
                 self.addChild(contentNode!)
             }
-            layoutItemHeight = contentNode?.calculateHeight ?? SKTableViewNode.automaticDimension
+            //layoutItemHeight = contentNode?.calculateHeight ?? SKTableViewNode.automaticDimension
         }
     }
     
-    
-    public init(type: LayoutType, index: IndexPath) {
+    public init(type: LayoutType, TableView: SKTableViewNode) {
         self.itemType = type
-        self.index = index
+        self.tableview = TableView
         
         super.init()
     }
@@ -534,22 +517,23 @@ fileprivate class SKTableViewNodeLayoutItem: SKNode {
 //  MARK: - SKTableViewNodeComponent
 
 public class SKTableViewNodeComponent: SKNode {
-    public weak var tableview: SKTableViewNode?
+    private(set) public weak var tableview: SKTableViewNode?
     
     fileprivate var calculateHeight: CGFloat {
         return calculateAccumulatedFrame().size.height
     }
     
-    //abandon
-    fileprivate var isAddedOnTableView: Bool {
-        var parentnode = parent
-        while parentnode != nil {
-            if parentnode == tableview {
-                return true
+    fileprivate var backgroundLayer: SKNode = SKNode()
+    fileprivate var foregroundLayer: SKNode = SKNode()
+    
+    public var backgroundNode: SKNode? {
+        didSet {
+            oldValue?.removeFromParent()
+            if backgroundNode != nil {
+                backgroundNode!.position = CGPoint.zero
+                backgroundLayer.addChild(backgroundNode!)
             }
-            parentnode = parentnode?.parent
         }
-        return false
     }
     
     public var size: CGSize? {
@@ -563,10 +547,37 @@ public class SKTableViewNodeComponent: SKNode {
         super.init()
         
         tableview = TableView
+        initLayer()
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func initLayer() {
+        backgroundLayer = SKSpriteNode(color: SKColor.clear, size: size!)
+        backgroundLayer.removeFromParent()
+        backgroundLayer.position = CGPoint.zero
+        backgroundLayer.zPosition = UIlayer.BackgroundLayer.rawValue
+        foregroundLayer.removeFromParent()
+        foregroundLayer.position = CGPoint.zero
+        foregroundLayer.zPosition = UIlayer.ForegroundLayer.rawValue
+        self.addChild(backgroundLayer)
+        self.addChild(foregroundLayer)
+    }
+    
+    fileprivate func setScaleTo(_ toSize: CGSize) {
+        guard backgroundNode != nil else {
+            return
+        }
+        
+        if backgroundNode!.calculateAccumulatedFrame().size.width > 0 {
+            backgroundNode!.xScale = toSize.width / backgroundNode!.calculateAccumulatedFrame().size.width
+        }
+        
+        if backgroundNode!.calculateAccumulatedFrame().size.height > 0 {
+            backgroundNode!.yScale = toSize.height / backgroundNode!.calculateAccumulatedFrame().size.height
+        }
     }
 }
 
@@ -575,13 +586,151 @@ public class SKTableViewNodeComponent: SKNode {
 
 public class SKTableViewNodeCell: SKTableViewNodeComponent {
     
+    fileprivate override var calculateHeight: CGFloat {
+        if self.style == .label {
+            return CGFloat.maximum(CGFloat.maximum(labelNode?.calculateAccumulatedFrame().size.height ?? 0 + 20, SKTableViewNode.defaultCellHeight), super.calculateHeight)
+        } else {
+            return super.calculateHeight
+        }
+    }
+    
+    public enum CellStyle: Int {
+        case label, split, custom
+    }
+    
+    private(set) public var style: CellStyle = .custom
+    
+    
+    private(set) public var labelNode: SKLabelNode?
+    private(set) public var leftNode: SKNode?
+    private(set) public var rightNode: SKNode?
+    private(set) public var contentNode: SKNode?
+    
+    
+    public init(TableView: SKTableViewNode, style: SKTableViewNodeCell.CellStyle = .custom) {
+        super.init(TableView: TableView)
+        self.style = style
+        initLayout()
+        
+        //init backgroundNode
+        backgroundNode = SKSpriteNode(color: #colorLiteral(red: 0.9999960065, green: 1, blue: 1, alpha: 1), size: size!)
+        
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func initLayout() {
+        
+        switch style {
+        case .label:
+            labelNode = SKLabelNode(fontNamed: "PingFangSC-Light")
+            labelNode!.fontSize = 17
+            labelNode!.fontColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+            labelNode!.horizontalAlignmentMode = .left
+            labelNode!.verticalAlignmentMode = .center
+            labelNode!.lineBreakMode = .byTruncatingMiddle
+            labelNode!.preferredMaxLayoutWidth = size!.width - 40
+            labelNode!.numberOfLines = 1
+            labelNode!.position = CGPoint(x: 20 - size!.width / 2.0, y: 0)
+            foregroundLayer.addChild(labelNode!)
+        case .split:
+            leftNode = SKNode()
+            rightNode = SKNode()
+            leftNode?.position = CGPoint(x: 0 - size!.width / 2.0, y: 0)
+            rightNode?.position = CGPoint(x: size!.width / 2.0, y: 0)
+            foregroundLayer.addChild(leftNode!)
+            foregroundLayer.addChild(rightNode!)
+        case .custom:
+            contentNode = SKNode()
+            contentNode!.position = CGPoint.zero
+            foregroundLayer.addChild(contentNode!)
+//        default:
+//            break
+        }
+        
+    }
+    
+    public func setSplitWidthAbsolute(left: CGFloat, right: CGFloat) {
+        if style == .split {
+            guard left + right <= size!.width else {
+                return
+            }
+            
+            leftNode?.position = CGPoint(x: left / 2.0 - size!.width / 2.0, y: 0)
+            rightNode?.position = CGPoint(x: size!.width / 2.0 - right / 2.0, y: 0)
+        }
+        
+    }
+    
+    public func setSplitWidthPercentage(left: CGFloat, right: CGFloat) {
+        if style == .split {
+            guard left + right <= 1 else {
+                return
+            }
+            
+            leftNode?.position = CGPoint(x: size!.width * (left - 1) / 2.0, y: 0)
+            rightNode?.position = CGPoint(x: size!.width * (1 - right) / 2.0, y: 0)
+        }
+    }
+    
 }
 
 
 //  MARK: - SKTableViewNodeHeadFoot
 
 public class SKTableViewNodeSectionHeadFoot: SKTableViewNodeComponent {
+    fileprivate override var calculateHeight: CGFloat {
+        if self.style == .label {
+            return CGFloat.maximum(CGFloat.maximum(labelNode?.calculateAccumulatedFrame().size.height ?? 0 + 20, SKTableViewNode.defaultCellHeight), super.calculateHeight)
+        } else {
+            return super.calculateHeight
+        }
+    }
     
+    public enum SectionStyle: Int {
+        case label, custom
+    }
+    
+    private(set) public var style: SectionStyle = .custom
+    
+    private(set) public var labelNode: SKLabelNode?
+    private(set) public var contentNode: SKNode?
+    
+    public init(TableView: SKTableViewNode, style: SKTableViewNodeSectionHeadFoot.SectionStyle = .custom) {
+        super.init(TableView: TableView)
+        self.style = style
+        initLayout()
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func initLayout() {
+        
+        switch style {
+        case .label:
+            labelNode = SKLabelNode(fontNamed: "PingFangSC-Semibold")
+            labelNode!.fontSize = 17
+            labelNode!.fontColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+            labelNode!.horizontalAlignmentMode = .left
+            labelNode!.verticalAlignmentMode = .center
+            labelNode!.lineBreakMode = .byTruncatingMiddle
+            labelNode!.preferredMaxLayoutWidth = size!.width - 40
+            labelNode!.numberOfLines = 1
+            labelNode!.position = CGPoint(x: 20 - size!.width / 2.0, y: 0)
+            foregroundLayer.addChild(labelNode!)
+        case .custom:
+            contentNode = SKNode()
+            contentNode!.position = CGPoint.zero
+            foregroundLayer.addChild(contentNode!)
+//        default:
+//            break
+        }
+        
+    }
 }
 
 
@@ -598,17 +747,6 @@ public protocol SKTableViewDelegate: class {
     @available(iOS 2.0, *)
     func tableView(_ tableView: SKTableViewNode, heightForFooterInSection section: Int) -> CGFloat
     
-    //    @available(iOS 7.0, *)
-    //    func tableView(_ tableView: SKTableViewNode, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat
-    //
-    //    @available(iOS 7.0, *)
-    //    func tableView(_ tableView: SKTableViewNode, estimatedHeightForHeaderInSection section: Int) -> CGFloat
-    //
-    //    @available(iOS 7.0, *)
-    //    func tableView(_ tableView: SKTableViewNode, estimatedHeightForFooterInSection section: Int) -> CGFloat
-    
-    
-    
     //  @available(iOS 2.0, *)
     //  func tableView(_ tableView: SKTableViewNode, willSelectRowAt indexPath: IndexPath) -> IndexPath?
     
@@ -622,13 +760,31 @@ public protocol SKTableViewDelegate: class {
     @available(iOS 3.0, *)
     func tableView(_ tableView: SKTableViewNode, didDeselectRowAt indexPath: IndexPath)
     
-    @available(iOS 2.0, *)
-    func tableView(_ tableView: SKTableViewNode, indentationLevelForRowAt indexPath: IndexPath) -> Int
+    //  @available(iOS 2.0, *)
+    //  func tableView(_ tableView: SKTableViewNode, indentationLevelForRowAt indexPath: IndexPath) -> Int
     
 }
 
 public extension SKTableViewDelegate {
+    func tableView(_ tableView: SKTableViewNode, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return SKTableViewNode.automaticDimension
+    }
     
+    func tableView(_ tableView: SKTableViewNode, heightForHeaderInSection section: Int) -> CGFloat {
+        return SKTableViewNode.automaticDimension
+    }
+    
+    func tableView(_ tableView: SKTableViewNode, heightForFooterInSection section: Int) -> CGFloat {
+        return SKTableViewNode.automaticDimension
+    }
+    
+    func tableView(_ tableView: SKTableViewNode, didSelectRowAt indexPath: IndexPath) {
+        
+    }
+    
+    func tableView(_ tableView: SKTableViewNode, didDeselectRowAt indexPath: IndexPath) {
+        
+    }
 }
 
 
