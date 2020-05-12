@@ -1,0 +1,270 @@
+<?xml version=1.0 encoding=UTF-8?>
+<!DOCTYPE plist PUBLIC -//Apple//DTD PLIST 1.0//EN http://www.apple.com/DTDs/PropertyList-1.0.dtd>
+<plist version=1.0>
+<array>
+	<dict>
+		<key>name</key>
+		<string>辛达苟萨</string>
+		<key>image</key>
+		<string>1</string>
+		<key>heropower</key>
+		<string>被动英雄技能 在你的回合结束时，被冻结的随从获得+1/+1。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>希尔瓦娜斯·风行者</string>
+		<key>image</key>
+		<string>2</string>
+		<key>heropower</key>
+		<string>英雄技能 移除一个友方随从。使相邻的随从获得+1/+1。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>调酒机器人</string>
+		<key>image</key>
+		<string>3</string>
+		<key>heropower</key>
+		<string>被动英雄技能 提升酒馆等级所需的铸币减少 （1）枚。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>馆长</string>
+		<key>image</key>
+		<string>4</string>
+		<key>heropower</key>
+		<string>被动英雄技能 开局时获得一个具有全部随从类型的1/1的融合怪。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>永恒者托奇</string>
+		<key>image</key>
+		<string>5</string>
+		<key>heropower</key>
+		<string>英雄技能 刷新鲍勃的酒馆，其中包含一个更高等级的随从。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>奈法利安</string>
+		<key>image</key>
+		<string>6</string>
+		<key>heropower</key>
+		<string>英雄技能 战斗开始时：对所有敌方随从造成1点伤害。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>帕奇维克</string>
+		<key>image</key>
+		<string>7</string>
+		<key>heropower</key>
+		<string>被动英雄技能 初始生命值为50点，而非40点。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>疯狂金字塔</string>
+		<key>image</key>
+		<string>8</string>
+		<key>heropower</key>
+		<string>英雄技能 随机使一个友方随从获得+4生命值。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>尤格-萨隆</string>
+		<key>image</key>
+		<string>9</string>
+		<key>heropower</key>
+		<string>英雄技能 随机从鲍勃的酒馆中雇用一个随从并使其获得+1/+1。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>伊莉斯·逐星</string>
+		<key>image</key>
+		<string>10</string>
+		<key>heropower</key>
+		<string>被动英雄技能 当你升级鲍勃的酒馆时，获得一张“人才地图”。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>舞者达瑞尔</string>
+		<key>image</key>
+		<string>11</string>
+		<key>heropower</key>
+		<string>被动英雄技能 在你出售一个随从后，随机使鲍勃的酒馆中的一个随从获得+1/+1，触发 两次。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>加拉克苏斯大王</string>
+		<key>image</key>
+		<string>12</string>
+		<key>heropower</key>
+		<string>英雄技能 使你的恶魔获得+1/+1。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>至尊盗王拉法姆</string>
+		<key>image</key>
+		<string>13</string>
+		<key>heropower</key>
+		<string>英雄技能 下一场战斗，将你消灭的第一个随从的原始版复制置入你的手牌。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>瓦托格尔女王</string>
+		<key>image</key>
+		<string>14</string>
+		<key>heropower</key>
+		<string>英雄技能 随机使一个友方机械，鱼人，野兽，恶魔和龙获得+2攻击力。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>米尔菲丝·法力风暴</string>
+		<key>image</key>
+		<string>15</string>
+		<key>heropower</key>
+		<string>被动英雄技能 鲍勃的酒馆中的机械获得+2攻击力。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>鼠王</string>
+		<key>image</key>
+		<string>16</string>
+		<key>heropower</key>
+		<string>被动英雄技能 每当你购买一个恶魔，使其获得+1/+2。每回合切换类型。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>挂机的阿凯</string>
+		<key>image</key>
+		<string>17</string>
+		<key>heropower</key>
+		<string>被动英雄技能 跳过你的前两个回合。开局时获得两个等级3的随从。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>堕落的乔治</string>
+		<key>image</key>
+		<string>18</string>
+		<key>heropower</key>
+		<string>英雄技能 使一个友方随从获得圣盾。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>巫妖王</string>
+		<key>image</key>
+		<string>19</string>
+		<key>heropower</key>
+		<string>英雄技能 战斗开始时：，使一个友方随从获得重生。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>海盗帕奇斯</string>
+		<key>image</key>
+		<string>20</string>
+		<key>heropower</key>
+		<string>英雄技能 战斗开始时：随机对两个敌方随从造成4点伤害。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>沙德沃克</string>
+		<key>image</key>
+		<string>21</string>
+		<key>heropower</key>
+		<string>英雄技能 你在本回合中的下一个战吼将触发 两次。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>炎魔之王拉格纳罗斯</string>
+		<key>image</key>
+		<string>22</string>
+		<key>heropower</key>
+		<string>英雄技能 战斗开始时：随机对两个敌方随从造成8点伤害。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>伟大的阿卡扎曼扎拉克</string>
+		<key>image</key>
+		<string>23</string>
+		<key>heropower</key>
+		<string>英雄技能 发现一个奥秘。将其置入战场。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>巫妖巴兹亚尔</string>
+		<key>image</key>
+		<string>24</string>
+		<key>heropower</key>
+		<string>英雄技能 受到 2点伤害，将一枚铸币置入你的 手中。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>艾德温·范克里夫</string>
+		<key>image</key>
+		<string>25</string>
+		<key>heropower</key>
+		<string>英雄技能 在本回合中，你每购买过一个随从，使一个随从获得+1/+1。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>米尔豪斯·法力风暴</string>
+		<key>image</key>
+		<string>26</string>
+		<key>heropower</key>
+		<string>被动英雄技能 购买随从的消耗改为（2）枚铸币，刷新酒馆消耗（2）枚铸币。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>迦拉克隆</string>
+		<key>image</key>
+		<string>27</string>
+		<key>heropower</key>
+		<string>英雄技能 将鲍勃的酒馆中的一个随从替换为一个等级更高的随从。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>雷诺·杰克逊</string>
+		<key>image</key>
+		<string>28</string>
+		<key>heropower</key>
+		<string>英雄技能 使一个友方随从变成金色。（每场对战限一次。）</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>死亡之翼</string>
+		<key>image</key>
+		<string>29</string>
+		<key>heropower</key>
+		<string>被动英雄技能 所有随从获得+2攻击力。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>伊瑟拉</string>
+		<key>image</key>
+		<string>30</string>
+		<key>heropower</key>
+		<string>被动英雄技能 在你的回合开始时，在鲍勃的酒馆添加一条龙。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>阿莱克丝塔萨</string>
+		<key>image</key>
+		<string>31</string>
+		<key>heropower</key>
+		<string>被动英雄技能 在你将鲍勃的酒馆升至5级后，发现两条龙。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>诺兹多姆</string>
+		<key>image</key>
+		<string>32</string>
+		<key>heropower</key>
+		<string>被动英雄技能 每回合你第一次刷新酒馆的消耗为（0）枚铸币。</string>
+	</dict>
+	<dict>
+		<key>name</key>
+		<string>玛里苟斯</string>
+		<key>image</key>
+		<string>33</string>
+		<key>heropower</key>
+		<string>英雄技能 将一个随从随机替换为一个等级相同的随从。</string>
+	</dict>
+</array>
+</plist>

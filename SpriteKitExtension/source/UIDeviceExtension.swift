@@ -11,7 +11,7 @@ import UIKit
 
 
 //该Extension用于识别设备类型和是否是刘海屏
-//This Extension of UIDevice can recognize what kind Device
+//This Extension of UIDevice can recognize Device type
 public extension UIDevice {
     var modelName: String {
         

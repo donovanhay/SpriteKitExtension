@@ -11,14 +11,15 @@ import GameplayKit
 
 class GameScene: SKScene {
     
-    private let demos = ["StaticTableViewDemo-Leaderboard": StaticTableViewScene.self]
-    private var tableNode : SKTableViewNode?
+    private let demos = ["StaticTableViewDemo-Leaderboard": StaticTableViewScene.self,
+                         "ScrollTalbeViewDemo-HeroesInfo": ScrollTableViewScene.self]
+    private var tableNode : TableViewNode?
     
     override func didMove(to view: SKView) {
         self.backgroundColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         self.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         
-        tableNode = SKTableViewNode(size: CGSize(width: view.bounds.size.width - 40, height: view.bounds.size.height - 100))
+        tableNode = TableViewNode(size: CGSize(width: view.bounds.size.width - 40, height: view.bounds.size.height - 100))
         tableNode!.position = CGPoint.zero
         tableNode!.delegate = self
         tableNode!.dataSource = self
@@ -51,8 +52,8 @@ class GameScene: SKScene {
     }
 }
 
-extension GameScene: SKTableViewDelegate {
-    func tableView(_ tableView: SKTableViewNode, didSelectRowAt indexPath: IndexPath) {
+extension GameScene: TableViewDelegate {
+    func tableView(_ tableView: TableViewNode, didSelectRowAt indexPath: IndexPath) {
         let sceneType = Array(demos.values)[indexPath.row] as SKScene.Type
         let selectedScene = sceneType.init(size: view!.bounds.size)
         
@@ -60,22 +61,22 @@ extension GameScene: SKTableViewDelegate {
         
     }
     
-    func tableView(_ tableView: SKTableViewNode, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return SKTableViewNode.automaticDimension
+    func tableView(_ tableView: TableViewNode, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return TableViewNode.automaticDimension
     }
 }
 
-extension GameScene: SKTableViewDataSource {
-    func numberOfSections(in tableView: SKTableViewNode) -> Int {
+extension GameScene: TableViewDataSource {
+    func numberOfSections(in tableView: TableViewNode) -> Int {
         return 1
     }
     
-    func tableView(_ tableView: SKTableViewNode, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: TableViewNode, numberOfRowsInSection section: Int) -> Int {
         return demos.count
     }
     
-    func tableView(_ tableView: SKTableViewNode, cellForRowAt indexPath: IndexPath) -> SKTableViewNodeCell {
-        let cell = SKTableViewNodeCell(TableView: tableView, style: .label)
+    func tableView(_ tableView: TableViewNode, cellForRowAt indexPath: IndexPath) -> TableViewNodeCell {
+        let cell = TableViewNodeCell(TableView: tableView, style: .label)
         cell.labelNode?.text = Array(demos.keys)[indexPath.row]
         
 //        let back = SKShapeNode(rectOf: cell.size!)
@@ -87,9 +88,9 @@ extension GameScene: SKTableViewDataSource {
         return cell
     }
     
-    func tableView(_ tableView: SKTableViewNode, viewNodeForHeaderInSection section: Int) -> SKTableViewNodeSectionHeadFoot? {
-        let sectionHeader = SKTableViewNodeSectionHeadFoot(TableView: tableView, style: .label)
-        sectionHeader.labelNode!.text = "Section"
+    func tableView(_ tableView: TableViewNode, viewNodeForHeaderInSection section: Int) -> TableViewNodeSectionHeadFoot? {
+        let sectionHeader = TableViewNodeSectionHeadFoot(TableView: tableView, style: .label)
+        sectionHeader.labelNode!.text = "Demos"
         return sectionHeader
     }
     

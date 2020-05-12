@@ -23,7 +23,7 @@ class StaticTableViewScene: SKScene {
                          "NONAME................................1000"]
     
     private var backgroundNode: SKSpriteNode?
-    private var leaderboardTable: SKTableViewNode?
+    private var leaderboardTable: TableViewNode?
     private var leaderboardLabel: SKLabelNode?
     private var backLabel: SKLabelNode?
     
@@ -49,7 +49,7 @@ class StaticTableViewScene: SKScene {
         self.addChild(leaderboardLabel!)
         
         //leaderboardTable
-        leaderboardTable = SKTableViewNode(size: CGSize(width: 300, height: 500))
+        leaderboardTable = TableViewNode(size: CGSize(width: 300, height: 500))
         leaderboardTable!.dataSource = self
         leaderboardTable!.delegate = self
         leaderboardTable!.allowsScroll = false
@@ -83,9 +83,9 @@ class StaticTableViewScene: SKScene {
 }
 
 
-extension StaticTableViewScene: SKTableViewDataSource {
-    func tableView(_ tableView: SKTableViewNode, cellForRowAt indexPath: IndexPath) -> SKTableViewNodeCell {
-        let cell = SKTableViewNodeCell(TableView: tableView, style: .label)
+extension StaticTableViewScene: TableViewDataSource {
+    func tableView(_ tableView: TableViewNode, cellForRowAt indexPath: IndexPath) -> TableViewNodeCell {
+        let cell = TableViewNodeCell(TableView: tableView, style: .label)
         cell.backgroundNode = SKSpriteNode(color: SKColor.clear, size: cell.size!)
         cell.labelNode!.fontName = "AmericanTypewriter"
         cell.labelNode!.fontColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
@@ -94,26 +94,26 @@ extension StaticTableViewScene: SKTableViewDataSource {
         return cell
     }
     
-    func tableView(_ tableView: SKTableViewNode, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: TableViewNode, numberOfRowsInSection section: Int) -> Int {
         return infos.count
     }
     
-    func numberOfSections(in tableView: SKTableViewNode) -> Int {
+    func numberOfSections(in tableView: TableViewNode) -> Int {
         return 1
     }
     
 }
 
-extension StaticTableViewScene: SKTableViewDelegate {
-    func tableView(_ tableView: SKTableViewNode, heightForHeaderInSection section: Int) -> CGFloat {
+extension StaticTableViewScene: TableViewDelegate {
+    func tableView(_ tableView: TableViewNode, heightForHeaderInSection section: Int) -> CGFloat {
         return 0
     }
     
-    func tableView(_ tableView: SKTableViewNode, heightForFooterInSection section: Int) -> CGFloat {
+    func tableView(_ tableView: TableViewNode, heightForFooterInSection section: Int) -> CGFloat {
         return 0
     }
     
-    func tableView(_ tableView: SKTableViewNode, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    func tableView(_ tableView: TableViewNode, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 40
     }
 }
